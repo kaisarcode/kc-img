@@ -22,11 +22,11 @@ kc-img --input image.jpg --width 800 --format png > output.png
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
-| `--input`, `-i` | Source image path (can be a local file or a direct URL) | `NULL` (Required) |
-| `--width`, `-w` | Target width in pixels | `0` (Required) |
-| `--height`, `-e` | Target height in pixels (optional) | `0` (Auto-ratio) |
-| `--format`, `-f` | Output image format extension | `png` |
-| `--help`, `-h` | Show help and usage information | `NULL` |
+| `--input` | Source image path (can be a local file or a direct URL) | `NULL` (Required) |
+| `--width` | Target width in pixels | `0` (Required) |
+| `--height` | Target height in pixels (optional) | `0` (Auto-ratio) |
+| `--format` | Output image format extension | `png` |
+| `--help` | Show help and usage information | `NULL` |
 
 ## Layout
 

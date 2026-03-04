@@ -71,7 +71,7 @@ test_kcs() {
 # @brief Verifies CLI help and fail-fast argument handling.
 # @return 0 on success.
 test_cli() {
-    if ! "$KC_BIN_EXEC" --help | grep -q "Usage:"; then
+    if ! "$KC_BIN_EXEC" --help | grep -q "Options:"; then
         fail "CLI: Help flag failed."
     fi
     pass "CLI: Help flag verified."

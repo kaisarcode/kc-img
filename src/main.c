@@ -21,14 +21,14 @@
  * @param bin Name of the binary.
  * @return void
  */
-void kc_img_usage(const char *bin) {
-    printf("Usage: %s --input <path> --width <px> [options]\n", bin);
+void kc_img_help(const char *bin) {
+    (void)bin;
     printf("Options:\n");
-    printf("  -i, --input <path>   Source image path (local or URL)\n");
-    printf("  -w, --width <px>     Target width\n");
-    printf("  -e, --height <px>    Target height (optional)\n");
-    printf("  -f, --format <ext>   Output format (default: png)\n");
-    printf("  -h, --help           Show help\n");
+    printf("  --input <path>       Source image path (local or URL)\n");
+    printf("  --width <px>         Target width\n");
+    printf("  --height <px>        Target height (optional)\n");
+    printf("  --format <ext>       Output format (default: png)\n");
+    printf("  --help               Show help\n");
 }
 
 /**
@@ -160,22 +160,22 @@ int main(int argc, char **argv) {
     MagickWandGenesis();
     MagickWand *wand = NewMagickWand();
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-            kc_img_usage(argv[0]);
+        if (strcmp(argv[i], "--help") == 0) {
+            kc_img_help(argv[0]);
             return 0;
         }
-        if ((strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--input") == 0) && i + 1 < argc) {
+        if (strcmp(argv[i], "--input") == 0 && i + 1 < argc) {
             input = argv[++i];
-        } else if ((strcmp(argv[i], "-w") == 0 || strcmp(argv[i], "--width") == 0) && i + 1 < argc) {
+        } else if (strcmp(argv[i], "--width") == 0 && i + 1 < argc) {
             width = atoi(argv[++i]);
-        } else if ((strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--height") == 0) && i + 1 < argc) {
+        } else if (strcmp(argv[i], "--height") == 0 && i + 1 < argc) {
             height = atoi(argv[++i]);
-        } else if ((strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--format") == 0) && i + 1 < argc) {
+        } else if (strcmp(argv[i], "--format") == 0 && i + 1 < argc) {
             fmt = argv[++i];
         }
     }
     if (!input || width <= 0) {
-        kc_img_usage(argv[0]);
+        kc_img_help(argv[0]);
         return 1;
     }
     ext = kc_img_extension(input);
