@@ -28,6 +28,33 @@ kc-img --input image.jpg --width 800 --format png > output.png
 | `--format`, `-f` | Output image format extension | `png` |
 | `--help`, `-h` | Show help and usage information | `NULL` |
 
+## Layout
+
+- Binaries are produced locally in `bin/<arch>/`.
+- ImageMagick and `resvg` are consumed from the system layout installed by `kc-deps`.
+- Shared libraries install under `/usr/local/lib/kaisarcode/imagemagick/<arch>/lib/`.
+- `resvg` installs under `/usr/local/lib/kaisarcode/resvg/<arch>/bin/`.
+- No `.kcrc` or `KC_WORKSPACE` is required.
+
+## Testing
+
+`./test.sh` remains a functional suite for `kc-img` itself:
+
+- strict CLI validation
+- ImageMagick-based resizing and extent behavior
+- alpha preservation
+- SVG rendering through `resvg`
+
+## Compilation
+
+```bash
+make x86_64
+make aarch64
+make arm64-v8a
+make win64
+make all
+```
+
 ## Technical Logic
 
 - **Lanczos Filtering**: Used for standard resizing when only `--width` is provided to ensure maximum visual fidelity.

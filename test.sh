@@ -1,12 +1,15 @@
 #!/bin/bash
 # test.sh - Automated test suite for kc-img
-# Summary: Tiered testing for KCS, Ecosystem compliance, and ImageMagick logic.
+# Summary: Tiered testing for KCS, autonomous layout, and image processing logic.
 #
 # Author:  KaisarCode
 # Website: https://kaisarcode.com
 # License: GNU GPL v3.0
 
 set -e
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+APP_ROOT="$SCRIPT_DIR"
 
 # @brief Prints failure details and exits.
 # @param message Error description.
@@ -23,33 +26,18 @@ pass() {
     printf "\033[32m[PASS]\033[0m %s\n" "$1"
 }
 
-# @brief Loads KC_WORKSPACE from the nearest .kcrc file.
-# @return 0 on success.
-load_env() {
-    SEARCH_DIR=$(pwd)
-    while [ "$SEARCH_DIR" != "/" ]; do
-        if [ -f "$SEARCH_DIR/.kcrc" ]; then
-            . "$SEARCH_DIR/.kcrc"
-            break
-        fi
-        SEARCH_DIR=$(dirname "$SEARCH_DIR")
-    done
-    if [ -z "$KC_WORKSPACE" ]; then
-        fail "KC_WORKSPACE not found."
-    fi
-}
-
 # @brief Prepares environment and verifies binary and shared library paths.
 # @return 0 on success.
 test_setup() {
     ARCH=$(uname -m)
     [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "aarch64" ] || ARCH="arm64-v8a"
-    KC_BIN_EXEC="$KC_WORKSPACE/bin/kaisarcode/$ARCH/kc-img"
-    IM_LIB_DIR="$KC_WORKSPACE/lib/imagemagick/$ARCH/lib"
-    IM_BIN_DIR="$KC_WORKSPACE/lib/imagemagick/$ARCH/bin"
-    KC_RESVG_EXEC="$KC_WORKSPACE/lib/resvg/$ARCH/bin/resvg"
+    KC_BIN_EXEC="$APP_ROOT/bin/$ARCH/kc-img"
+    IM_ROOT="/usr/local/lib/kaisarcode/imagemagick/$ARCH"
+    IM_LIB_DIR="$IM_ROOT/lib"
+    IM_BIN_DIR="$IM_ROOT/bin"
+    KC_RESVG_EXEC="/usr/local/lib/kaisarcode/resvg/$ARCH/bin/resvg"
 
-    if [ ! -f "$KC_BIN_EXEC" ]; then
+    if [ ! -x "$KC_BIN_EXEC" ]; then
         fail "Binary not found at $KC_BIN_EXEC"
     fi
 
@@ -57,8 +45,8 @@ test_setup() {
         fail "ImageMagick libraries not found at $IM_LIB_DIR"
     fi
 
-    export LD_LIBRARY_PATH="$IM_LIB_DIR:$LD_LIBRARY_PATH"
-    export KC_RESVG_BIN="$KC_RESVG_EXEC"
+    export LD_LIBRARY_PATH="$IM_LIB_DIR:${LD_LIBRARY_PATH:-}"
+    export PATH="$(dirname "$KC_RESVG_EXEC"):$PATH"
     KC_IDENTIFY="$IM_BIN_DIR/identify"
     KC_CONVERT="$IM_BIN_DIR/convert"
     pass "Environment verified: using $KC_BIN_EXEC"
@@ -67,9 +55,9 @@ test_setup() {
 # @brief Executes the KCS validator if available.
 # @return 0 on success.
 test_kcs() {
-    if [ -f "$KC_WORKSPACE/bin/kcs" ]; then
-        find . -type f -not -path '*/.*' -not -path './bin/*' \
-            -exec "$KC_WORKSPACE/bin/kcs" {} + || fail "KCS validation failed."
+    if command -v kcs >/dev/null 2>&1; then
+        find "$APP_ROOT" -type f -not -path '*/.*' -not -path '*/bin/*' \
+            -exec kcs {} + || fail "KCS validation failed."
         pass "General: KCS compliance verified."
     else
         LOC=$(wc -l < src/main.c)
@@ -171,7 +159,6 @@ EOF
 # @brief Entry point for the automated test suite.
 # @return 0 on success.
 run_tests() {
-    load_env
     test_setup
     test_kcs
     test_cli

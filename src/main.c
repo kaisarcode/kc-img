@@ -13,27 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#if defined(_WIN32)
-#include <direct.h>
-#include <io.h>
-#include <process.h>
-#else
-#include <sys/wait.h>
-#include <unistd.h>
-#endif
 #include <wand/MagickWand.h>
-
-#if defined(_WIN32)
-#define KC_IMG_ACCESS _access
-#define KC_IMG_X_OK 0
-#define KC_IMG_CLOSE _close
-#define KC_IMG_RESVG_EXT ".exe"
-#else
-#define KC_IMG_ACCESS access
-#define KC_IMG_X_OK X_OK
-#define KC_IMG_CLOSE close
-#define KC_IMG_RESVG_EXT ""
-#endif
+#include "resvg.h"
 
 /**
  * Displays application usage help.
@@ -63,41 +44,6 @@ const char *kc_img_extension(const char *input) {
 }
 
 /**
- * Returns the ecosystem architecture directory name.
- * @return const char * Architecture name.
- */
-const char *kc_img_arch(void) {
-#if defined(_WIN32)
-    return "win64";
-#elif defined(__ANDROID__)
-    return "arm64-v8a";
-#elif defined(__aarch64__)
-    return "aarch64";
-#else
-    return "x86_64";
-#endif
-}
-
-/**
- * Resolves the resvg executable path.
- * @return const char * Executable path or NULL.
- */
-const char *kc_img_resvg_path(void) {
-    static char path[1024];
-    const char *env = getenv("KC_RESVG_BIN");
-    const char *workspace = getenv("KC_WORKSPACE");
-    const char *arch = kc_img_arch();
-    if (env != NULL && KC_IMG_ACCESS(env, KC_IMG_X_OK) == 0) return env;
-    if (workspace != NULL) {
-        snprintf(path, sizeof(path), "%s/lib/resvg/%s/bin/resvg%s", workspace, arch, KC_IMG_RESVG_EXT);
-        if (KC_IMG_ACCESS(path, KC_IMG_X_OK) == 0) return path;
-    }
-    snprintf(path, sizeof(path), "/usr/local/lib/kaisarcode/%s/resvg%s", arch, KC_IMG_RESVG_EXT);
-    if (KC_IMG_ACCESS(path, KC_IMG_X_OK) == 0) return path;
-    return NULL;
-}
-
-/**
  * Reports the latest Magick exception to stderr.
  * @param wand MagickWand instance.
  * @param prefix Error label.
@@ -111,44 +57,6 @@ void kc_img_report(MagickWand *wand, const char *prefix) {
 }
 
 /**
- * Renders SVG input through resvg to a temporary PNG.
- * @param wand MagickWand instance that receives the rendered image.
- * @param input Source path or URL.
- * @param w Target width.
- * @param h Target height.
- * @return int 0 on success, 1 on failure.
- */
-int kc_img_read_svg(MagickWand *wand, const char *input, int w, int h) {
-    char tmp[] = "/tmp/kc-img-svg-XXXXXX";
-    char width[32];
-    char height[32];
-    const char *resvg = kc_img_resvg_path();
-    char *argv[] = {(char *) resvg, "-w", width, "-h", height, (char *) input, tmp, NULL};
-    if (resvg == NULL) return 1;
-    int fd = mkstemp(tmp);
-    if (fd < 0) return 1;
-    KC_IMG_CLOSE(fd);
-    unlink(tmp);
-    snprintf(width, sizeof(width), "%d", w);
-    snprintf(height, sizeof(height), "%d", h);
-#if defined(_WIN32)
-    if (_spawnvp(_P_WAIT, argv[0], (const char *const *) argv) != 0) return 1;
-#else
-    pid_t pid = fork();
-    if (pid < 0) return 1;
-    if (pid == 0) {
-        execvp(argv[0], argv);
-        _exit(1);
-    }
-    int status = 0;
-    if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) return 1;
-#endif
-    int result = (MagickReadImage(wand, tmp) == MagickFalse) ? 1 : 0;
-    unlink(tmp);
-    return result;
-}
-
-/**
  * Loads the source image into the MagickWand instance.
  * @param wand MagickWand instance.
  * @param input Source path or URL.
@@ -159,7 +67,7 @@ int kc_img_read_svg(MagickWand *wand, const char *input, int w, int h) {
  */
 int kc_img_load(MagickWand *wand, const char *input, int w, int h, int svg_mode) {
     MagickSetResolution(wand, w * 2, h * 2);
-    if (svg_mode != 0) return kc_img_read_svg(wand, input, w, h);
+    if (svg_mode != 0) return kc_img_render_svg(wand, input, w, h);
     return (MagickReadImage(wand, input) == MagickFalse) ? 1 : 0;
 }
 
