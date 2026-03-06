@@ -20,6 +20,10 @@ fail() {
     exit 1
 }
 
+fail_unavailable() {
+    fail "Remote asset is not available yet (repo may still be private): $1"
+}
+
 require_linux() {
     [ "$(uname -s)" = "Linux" ] || fail "install.sh currently targets Linux only."
 }
@@ -43,7 +47,11 @@ detect_arch() {
 download_asset() {
     url="$1"
     out="$2"
-    wget -qO "$out" "$url" || fail "Unable to download asset: $url"
+    if ! wget -qO "$out" "$url"; then
+        rm -f "$out"
+        fail_unavailable "$url"
+    fi
+    [ -s "$out" ] || { rm -f "$out"; fail_unavailable "$url"; }
 }
 
 install_dep() {
