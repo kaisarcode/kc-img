@@ -33,7 +33,7 @@ kc-img --input image.jpg --width 800 --format png > output.png
 ## Layout
 
 - Binaries are produced locally in `bin/<arch>/`.
-- ImageMagick and `resvg` are consumed from the system layout installed by `kc-deps`.
+- ImageMagick and `resvg` are consumed from the system layout installed via the remote `kc-deps` repository.
 - Shared libraries install under `/usr/local/lib/kaisarcode/imagemagick/<arch>/lib/`.
 - `resvg` installs under `/usr/local/lib/kaisarcode/resvg/<arch>/bin/`.
 
