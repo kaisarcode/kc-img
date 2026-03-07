@@ -1,5 +1,7 @@
 # kc-img
 
+> **Note:** This application is in the development and testing phase, is not ready for production use, and may change without prior notice.
+
 High-performance, deterministic image manipulation engine powered by MagickWand/ImageMagick.
 
 Designed for high-speed server-side image processing, `kc-img` transforms images according to strictly defined dimensions and formats, outputting a binary blob directly to `stdout` for efficient piping or streaming.
