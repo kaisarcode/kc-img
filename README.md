@@ -20,7 +20,7 @@ Designed for high-speed server-side image processing, `kc-img` transforms images
 kc-img --input image.jpg --width 800 --format png > output.png
 ```
 
-### Reference
+### Full Parameter Reference
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
@@ -29,13 +29,6 @@ kc-img --input image.jpg --width 800 --format png > output.png
 | `--height` | Target height in pixels (optional) | `0` (Auto-ratio) |
 | `--format` | Output image format extension | `png` |
 | `--help` | Show help and usage information | `NULL` |
-
-## Layout
-
-- Binaries are produced locally in `bin/<arch>/`.
-- ImageMagick and `resvg` are consumed from the system layout installed via the remote `kc-deps` repository.
-- Shared libraries install under `/usr/local/lib/kaisarcode/imagemagick/<arch>/lib/`.
-- `resvg` installs under `/usr/local/lib/kaisarcode/resvg/<arch>/bin/`.
 
 ## Testing
 
