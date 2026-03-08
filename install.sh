@@ -11,6 +11,8 @@ set -e
 APP_ID="kc-img"
 APP_REPO_RAW="https://raw.githubusercontent.com/kaisarcode/kc-img/master"
 DEPS_REPO_ARCHIVE="https://codeload.github.com/kaisarcode/kc-deps/tar.gz/refs/heads/master"
+DEPS_REPO_MEDIA="https://media.githubusercontent.com/media/kaisarcode/kc-deps/master"
+DEPS_REPO_RAW="https://raw.githubusercontent.com/kaisarcode/kc-deps/master"
 SYS_BIN_DIR="/usr/local/bin"
 SYS_LIB_DIR="/usr/local/lib/kaisarcode"
 DEPS="imagemagick resvg"
@@ -54,6 +56,16 @@ download_asset() {
     [ -s "$out" ] || { rm -f "$out"; fail_unavailable "$url"; }
 }
 
+download_dep_asset() {
+    rel="$1"
+    out="$2"
+    if wget -qO "$out" "${DEPS_REPO_MEDIA}/${rel}" && [ -s "$out" ]; then
+        return 0
+    fi
+    rm -f "$out"
+    download_asset "${DEPS_REPO_RAW}/${rel}" "$out"
+}
+
 install_dep() {
     dep="$1"
     arch="$2"
@@ -62,10 +74,43 @@ install_dep() {
 
     download_asset "$DEPS_REPO_ARCHIVE" "$tmp_dir/kc-deps-master.tar.gz"
     tar -xzf "$tmp_dir/kc-deps-master.tar.gz" -C "$tmp_dir"
-    src_dir="$tmp_dir/kc-deps-master/lib/${dep}/${arch}"
-    [ -d "$src_dir" ] || fail "Dependency not found in kc-deps: ${dep}/${arch}"
-    sudo mkdir -p "${SYS_LIB_DIR}/${dep}"
-    sudo cp -a "$src_dir" "${SYS_LIB_DIR}/${dep}/"
+    case "$dep" in
+        imagemagick)
+            base_rel="lib/${dep}/${arch}/lib"
+            src_dir="$tmp_dir/kc-deps-master/$base_rel"
+            dst_dir="${SYS_LIB_DIR}/${dep}/${arch}/lib"
+            ;;
+        resvg)
+            base_rel="lib/${dep}/${arch}/bin"
+            src_dir="$tmp_dir/kc-deps-master/$base_rel"
+            dst_dir="${SYS_LIB_DIR}/${dep}/${arch}/bin"
+            ;;
+        *)
+            fail "Unsupported dependency: $dep"
+            ;;
+    esac
+    [ -d "$src_dir" ] || fail "Dependency runtime not found in kc-deps: $base_rel"
+    sudo mkdir -p "$dst_dir"
+    (
+        CDPATH= cd -- "$src_dir"
+        find . -mindepth 1 | sort
+    ) | while IFS= read -r rel; do
+        src_path="$src_dir/$rel"
+        dst_path="$dst_dir/${rel#./}"
+        if [ -d "$src_path" ]; then
+            sudo mkdir -p "$dst_path"
+            continue
+        fi
+        sudo mkdir -p "$(dirname "$dst_path")"
+        if [ -L "$src_path" ]; then
+            sudo ln -sfn "$(readlink "$src_path")" "$dst_path"
+            continue
+        fi
+        mode=0644
+        [ -x "$src_path" ] && mode=0755
+        download_dep_asset "$base_rel/${rel#./}" "$tmp_dir/payload.bin"
+        sudo install -m "$mode" "$tmp_dir/payload.bin" "$dst_path"
+    done
 
     rm -rf "$tmp_dir"
     trap - RETURN
