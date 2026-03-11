@@ -64,4 +64,6 @@ make all
 
 **License:** [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html)
 
+**Email:** <kaisar@kaisarcode.com>
+
 © 2026 KaisarCode

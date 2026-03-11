@@ -10,6 +10,7 @@ BIN_ROOT   = bin
 TOOLCHAIN_ROOT = /usr/local/share/kaisarcode/toolchains
 
 IM_ROOT    = /usr/local/lib/kaisarcode/imagemagick/$(ARCH)
+IM_HEADER  = include/ImageMagick-6/wand/MagickWand.h
 
 # Toolchains
 NDK_VER     = android-ndk-r27c
@@ -49,6 +50,10 @@ win64:
 
 build_arch:
 	@mkdir -p $(BIN_ROOT)/$(ARCH)
+	@if [ ! -f "$(IM_ROOT)/$(IM_HEADER)" ]; then \
+		echo "[ERROR] ImageMagick headers not found under $(IM_ROOT)"; \
+		exit 1; \
+	fi
 	$(eval DEV_LIB = $(IM_ROOT)/lib)
 	$(eval SYS_LIB = /usr/local/lib/kaisarcode/imagemagick/$(ARCH)/lib)
 	$(eval UNIX_LIBS = $(DEV_LIB)/libMagickWand-6.Q16.so $(DEV_LIB)/libMagickCore-6.Q16.so)

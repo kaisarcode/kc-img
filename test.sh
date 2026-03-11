@@ -8,7 +8,7 @@
 
 set -e
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 APP_ROOT="$SCRIPT_DIR"
 
 # @brief Prints failure details and exits.
@@ -46,7 +46,8 @@ test_setup() {
     fi
 
     export LD_LIBRARY_PATH="$IM_LIB_DIR:${LD_LIBRARY_PATH:-}"
-    export PATH="$(dirname "$KC_RESVG_EXEC"):$PATH"
+    KC_RESVG_DIR=$(dirname "$KC_RESVG_EXEC")
+    export PATH="$KC_RESVG_DIR:$PATH"
     KC_IDENTIFY="$IM_BIN_DIR/identify"
     KC_CONVERT="$IM_BIN_DIR/convert"
     pass "Environment verified: using $KC_BIN_EXEC"
@@ -137,7 +138,7 @@ test_functional() {
 
     cat > "$T_SVG" <<'EOF'
 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="60">
-  <rect width="120" height="60" fill="red"/>
+    <rect width="120" height="60" fill="red"/>
 </svg>
 EOF
 

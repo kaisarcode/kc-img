@@ -17,19 +17,29 @@ SYS_BIN_DIR="/usr/local/bin"
 SYS_LIB_DIR="/usr/local/lib/kaisarcode"
 DEPS="imagemagick resvg"
 
+# @brief Prints an error message and exits.
+# @param $1 Error message.
+# @return Does not return.
 fail() {
     printf "Error: %s\n" "$1" >&2
     exit 1
 }
 
+# @brief Reports an unavailable remote asset.
+# @param $1 Remote URL.
+# @return Does not return.
 fail_unavailable() {
     fail "Remote asset is not available yet (repo may still be private): $1"
 }
 
+# @brief Verifies the installer runs on Linux.
+# @return 0 on success.
 require_linux() {
     [ "$(uname -s)" = "Linux" ] || fail "install.sh currently targets Linux only."
 }
 
+# @brief Verifies required host tools are present.
+# @return 0 on success.
 require_tools() {
     command -v tar >/dev/null 2>&1 || fail "tar is required."
     command -v cp >/dev/null 2>&1 || fail "cp is required."
@@ -37,6 +47,8 @@ require_tools() {
     command -v sudo >/dev/null 2>&1 || fail "sudo is required."
 }
 
+# @brief Resolves the current runtime architecture.
+# @return Prints the normalized architecture.
 detect_arch() {
     case "$(uname -m)" in
         x86_64) printf "x86_64" ;;
@@ -46,6 +58,10 @@ detect_arch() {
     esac
 }
 
+# @brief Downloads one remote asset to a local path.
+# @param $1 Source URL.
+# @param $2 Output path.
+# @return 0 on success.
 download_asset() {
     url="$1"
     out="$2"
@@ -56,6 +72,10 @@ download_asset() {
     [ -s "$out" ] || { rm -f "$out"; fail_unavailable "$url"; }
 }
 
+# @brief Downloads one dependency asset from kc-deps media or raw fallback.
+# @param $1 Relative dependency path.
+# @param $2 Output path.
+# @return 0 on success.
 download_dep_asset() {
     rel="$1"
     out="$2"
@@ -66,6 +86,10 @@ download_dep_asset() {
     download_asset "${DEPS_REPO_RAW}/${rel}" "$out"
 }
 
+# @brief Installs one dependency runtime tree.
+# @param $1 Dependency name.
+# @param $2 Architecture name.
+# @return 0 on success.
 install_dep() {
     dep="$1"
     arch="$2"
@@ -92,7 +116,7 @@ install_dep() {
     [ -d "$src_dir" ] || fail "Dependency runtime not found in kc-deps: $base_rel"
     sudo mkdir -p "$dst_dir"
     (
-        CDPATH= cd -- "$src_dir"
+        CDPATH='' cd -- "$src_dir"
         find . -mindepth 1 | sort
     ) | while IFS= read -r rel; do
         src_path="$src_dir/$rel"
@@ -116,6 +140,9 @@ install_dep() {
     trap - RETURN
 }
 
+# @brief Installs the application binary for one architecture.
+# @param $1 Architecture name.
+# @return 0 on success.
 install_binary() {
     arch="$1"
     bin_rel="bin/${arch}/${APP_ID}"
@@ -130,6 +157,8 @@ install_binary() {
     trap - RETURN
 }
 
+# @brief Runs the installer entry point.
+# @return 0 on success.
 main() {
     require_linux
     require_tools
