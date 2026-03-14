@@ -25,7 +25,7 @@ NDK_API      = 24
 CC_arm64_v8a = $(NDK_BIN)/aarch64-linux-android$(NDK_API)-clang
 CC_win64     = x86_64-w64-mingw32-gcc
 
-CFLAGS  = -Wall -Wextra -O3 -std=c11 \
+CFLAGS  = -Wall -Wextra -Werror -O3 -std=c11 \
 	-DMAGICKCORE_QUANTUM_DEPTH=16 -DMAGICKCORE_HDRI_ENABLE=0
 WINSOCK = -lws2_32 -ladvapi32 -lgdi32 -luser32 -lurlmon -lpthread
 
@@ -51,7 +51,7 @@ win64:
 	CFLAGS="$(CFLAGS) -D_WIN32_WINNT=0x0601"
 
 build_arch:
-	@mkdir -p $(BIN_ROOT)/$(ARCH)
+	mkdir -p $(BIN_ROOT)/$(ARCH)
 	$(eval IM_ROOT = $(if $(wildcard $(IM_DEV_ROOT)/$(ARCH)/$(IM_HEADER)),$(IM_DEV_ROOT),$(IM_SYS_ROOT)))
 	$(eval IM_INC = $(IM_ROOT)/$(ARCH)/include)
 	$(eval IM_LIB = $(IM_ROOT)/$(ARCH)/lib)
