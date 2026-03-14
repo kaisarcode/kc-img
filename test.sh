@@ -31,11 +31,24 @@ pass() {
 test_setup() {
     ARCH=$(uname -m)
     [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "aarch64" ] || ARCH="arm64-v8a"
-    KC_BIN_EXEC="$APP_ROOT/bin/$ARCH/kc-img"
-    IM_ROOT="/usr/local/lib/kaisarcode/imagemagick/$ARCH"
+    WORK_ROOT=$(CDPATH='' cd -- "$APP_ROOT/../.." && pwd)
+    IM_DEV_ROOT="$WORK_ROOT/kc-deps/lib/imagemagick"
+    IM_SYS_ROOT="/usr/local/lib/kaisarcode/imagemagick"
+    RESVG_DEV_ROOT="$WORK_ROOT/kc-deps/lib/resvg"
+    RESVG_SYS_ROOT="/usr/local/lib/kaisarcode/resvg"
+    export KC_BIN_EXEC="$APP_ROOT/bin/$ARCH/kc-img"
+    if [ -d "$IM_DEV_ROOT/$ARCH/lib" ]; then
+        IM_ROOT="$IM_DEV_ROOT/$ARCH"
+    else
+        IM_ROOT="$IM_SYS_ROOT/$ARCH"
+    fi
+    if [ -x "$RESVG_DEV_ROOT/$ARCH/bin/resvg" ]; then
+        KC_RESVG_EXEC="$RESVG_DEV_ROOT/$ARCH/bin/resvg"
+    else
+        KC_RESVG_EXEC="$RESVG_SYS_ROOT/$ARCH/bin/resvg"
+    fi
     IM_LIB_DIR="$IM_ROOT/lib"
     IM_BIN_DIR="$IM_ROOT/bin"
-    KC_RESVG_EXEC="/usr/local/lib/kaisarcode/resvg/$ARCH/bin/resvg"
 
     if [ ! -x "$KC_BIN_EXEC" ]; then
         fail "Binary not found at $KC_BIN_EXEC"
@@ -48,8 +61,8 @@ test_setup() {
     export LD_LIBRARY_PATH="$IM_LIB_DIR:${LD_LIBRARY_PATH:-}"
     KC_RESVG_DIR=$(dirname "$KC_RESVG_EXEC")
     export PATH="$KC_RESVG_DIR:$PATH"
-    KC_IDENTIFY="$IM_BIN_DIR/identify"
-    KC_CONVERT="$IM_BIN_DIR/convert"
+    export KC_IDENTIFY="$IM_BIN_DIR/identify"
+    export KC_CONVERT="$IM_BIN_DIR/convert"
     pass "Environment verified: using $KC_BIN_EXEC"
 }
 
@@ -71,17 +84,14 @@ test_kcs() {
 
 # @brief Verifies CLI help and fail-fast argument handling.
 # @return 0 on success.
-test_cli() {
+test_general() {
     if ! "$KC_BIN_EXEC" --help | grep -q "Options:"; then
         fail "CLI: Help flag failed."
     fi
     pass "CLI: Help flag verified."
 
-    if "$KC_BIN_EXEC" --input missing.png >/dev/null 2>&1; then
+    if "$KC_BIN_EXEC" missing.png >/dev/null 2>&1; then
         fail "CLI: Missing width should fail."
-    fi
-    if "$KC_BIN_EXEC" --width 100 >/dev/null 2>&1; then
-        fail "CLI: Missing input should fail."
     fi
     pass "CLI: Fail-fast argument validation verified."
 }
@@ -97,7 +107,7 @@ test_functional() {
     T_SVG="/tmp/kc_img_test.svg"
     T_SVG_OUT="/tmp/kc_img_svg.png"
 
-    if ! "$KC_BIN_EXEC" --input "xc:red" --width 100 --format png > "$T_OUT"; then
+    if ! "$KC_BIN_EXEC" "xc:red" --width 100 --format png > "$T_OUT"; then
         fail "Functional: Image generation failed."
     fi
 
@@ -114,7 +124,7 @@ test_functional() {
         fail "Functional: Test source generation failed."
     fi
 
-    if ! "$KC_BIN_EXEC" --input "$T_SRC" --width 50 --height 50 --format png > "$T_BOX"; then
+    if ! "$KC_BIN_EXEC" "$T_SRC" --width 50 --height 50 --format png > "$T_BOX"; then
         fail "Functional: Fixed-box resize failed."
     fi
 
@@ -127,7 +137,7 @@ test_functional() {
         fail "Functional: Alpha source generation failed."
     fi
 
-    if ! "$KC_BIN_EXEC" --input "$T_ALPHA_SRC" --width 50 --height 50 --format png > "$T_ALPHA_OUT"; then
+    if ! "$KC_BIN_EXEC" "$T_ALPHA_SRC" --width 50 --height 50 --format png > "$T_ALPHA_OUT"; then
         fail "Functional: Alpha-preserving resize failed."
     fi
 
@@ -145,7 +155,7 @@ EOF
     if [ ! -x "$KC_RESVG_EXEC" ]; then
         fail "Functional: resvg binary not found at $KC_RESVG_EXEC"
     fi
-    if ! "$KC_BIN_EXEC" --input "$T_SVG" --width 80 --format png > "$T_SVG_OUT"; then
+    if ! "$KC_BIN_EXEC" "$T_SVG" --width 80 --format png > "$T_SVG_OUT"; then
         fail "Functional: SVG rendering failed."
     fi
     SVG_SIZE=$("$KC_IDENTIFY" -format "%wx%h" "$T_SVG_OUT" 2>/dev/null)
@@ -162,7 +172,7 @@ EOF
 run_tests() {
     test_setup
     test_kcs
-    test_cli
+    test_general
     test_functional
     pass "All tests passed successfully."
 }

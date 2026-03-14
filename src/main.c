@@ -24,7 +24,6 @@
 void kc_img_help(const char *bin) {
     (void)bin;
     printf("Options:\n");
-    printf("  --input <path>       Source image path (local or URL)\n");
     printf("  --width <px>         Target width\n");
     printf("  --height <px>        Target height (optional)\n");
     printf("  --format <ext>       Output format (default: png)\n");
@@ -164,20 +163,21 @@ int main(int argc, char **argv) {
             kc_img_help(argv[0]);
             return 0;
         }
-        if (strcmp(argv[i], "--input") == 0 && i + 1 < argc) {
-            input = argv[++i];
-        } else if (strcmp(argv[i], "--width") == 0 && i + 1 < argc) {
+        if (strcmp(argv[i], "--width") == 0 && i + 1 < argc) {
             width = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--height") == 0 && i + 1 < argc) {
             height = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--format") == 0 && i + 1 < argc) {
             fmt = argv[++i];
+        } else if (strncmp(argv[i], "--", 2) != 0 && !input) {
+            input = argv[i];
         }
     }
-    if (!input || width <= 0) {
+    if (width <= 0) {
         kc_img_help(argv[0]);
         return 1;
     }
+    if (!input) input = "-";
     ext = kc_img_extension(input);
     svg_mode = (ext != NULL && strcasecmp(ext, "svg") == 0) ? 1 : 0;
     if (svg_mode != 0 && height <= 0) height = width;

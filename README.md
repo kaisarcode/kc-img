@@ -1,4 +1,4 @@
-# kc-img
+# kc-img - Image Manipulation Engine
 
 > **Note:** This application is in the development and testing phase, is not ready for production use, and may change without prior notice.
 
@@ -6,29 +6,41 @@ High-performance, deterministic image manipulation engine powered by MagickWand/
 
 Designed for high-speed server-side image processing, `kc-img` transforms images according to strictly defined dimensions and formats, outputting a binary blob directly to `stdout` for efficient piping or streaming.
 
-## Features
-
-- **Piping Architecture**: Outputs binary image data directly to `stdout`.
-- **Dynamic Resizing**: Support for both standard resizing and thumbnailing.
-- **Format Conversion**: Convert between common formats (PNG, JPEG, WEBP, etc.).
-- **Background Transparency**: Preserves "none" background transparency by default.
-- **Native Efficiency**: Built on MagickWand for high-precision Lanczos filtering.
-
 ## Usage
 
 ```bash
-kc-img --input image.jpg --width 800 --format png > output.png
+kc-img image.jpg --width 800 --format png > output.png
+  # OR from stdin
+kc-img --width 800 < image.jpg > output.png
 ```
 
 ### Full Parameter Reference
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
-| `--input` | Source image path (can be a local file or a direct URL) | `NULL` (Required) |
+| `[input]` | Positional source image path | `-` (stdin) |
 | `--width` | Target width in pixels | `0` (Required) |
 | `--height` | Target height in pixels (optional) | `0` (Auto-ratio) |
 | `--format` | Output image format extension | `png` |
-| `--help` | Show help and usage information | `NULL` |
+| `--help` | Show help and usage information | `false` |
+
+## Install
+
+Install the current-architecture production binary on Linux:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/kaisarcode/kc-img/master/install.sh | bash
+```
+
+## Build
+
+```bash
+make x86_64
+make aarch64
+make arm64-v8a
+make win64
+make all
+```
 
 ## Testing
 
@@ -38,16 +50,6 @@ kc-img --input image.jpg --width 800 --format png > output.png
 - ImageMagick-based resizing and extent behavior
 - alpha preservation
 - SVG rendering through `resvg`
-
-## Compilation
-
-```bash
-make x86_64
-make aarch64
-make arm64-v8a
-make win64
-make all
-```
 
 ## Technical Logic
 
